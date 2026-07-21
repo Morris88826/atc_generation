@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATC Synthetic Data Generation — Demo</title>
+<style>
+  :root {
+    --bg: #0b0e14;
+    --panel: #131722;
+    --panel-2: #1a1f2e;
+    --border: #262c3d;
+    --text: #e6e9f0;
+    --text-dim: #9aa3b8;
+    --accent: #5b8cff;
+    --accent-2: #7fd6c0;
+    --warn: #ffb454;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --panel-2: #f0f2f8;
+      --border: #e2e5ee;
+      --text: #1a1e2b;
+      --text-dim: #5b6272;
+      --accent: #3358d6;
+      --accent-2: #14876b;
+      --warn: #b5720a;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0e14; --panel: #131722; --panel-2: #1a1f2e; --border: #262c3d;
+    --text: #e6e9f0; --text-dim: #9aa3b8; --accent: #5b8cff; --accent-2: #7fd6c0; --warn: #ffb454;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fb; --panel: #ffffff; --panel-2: #f0f2f8; --border: #e2e5ee;
+    --text: #1a1e2b; --text-dim: #5b6272; --accent: #3358d6; --accent-2: #14876b; --warn: #b5720a;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 96px; }
+
+  header.hero { text-align: center; margin-bottom: 40px; }
+  header.hero h1 {
+    font-size: clamp(1.6rem, 3.2vw, 2.3rem);
+    margin: 0 0 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .badges { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; padding: 5px 12px; border-radius: 999px;
+    border: 1px solid var(--border); color: var(--text-dim);
+    text-decoration: none; background: var(--panel);
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .badge:hover { border-color: var(--accent); color: var(--text); }
+
+  .byline { color: var(--text-dim); font-size: 0.95rem; max-width: 720px; margin: 0 auto 6px; }
+  .affil { color: var(--text-dim); font-size: 0.82rem; max-width: 720px; margin: 0 auto; }
+
+  .notice {
+    margin: 26px auto 0; max-width: 720px; text-align: left;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; font-size: 0.85rem; color: var(--text-dim);
+  }
+  .notice b { color: var(--text); }
+
+  section { margin-top: 56px; }
+  h2 {
+    font-size: 1.3rem; margin: 0 0 16px; font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  h2 .idx {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--accent); color: white; font-size: 0.8rem; font-weight: 700;
+  }
+  p.lead { color: var(--text-dim); max-width: 760px; }
+
+  figure { margin: 20px 0 0; text-align: center; }
+  figure img { max-width: 100%; border-radius: 12px; border: 1px solid var(--border); }
+  figcaption { color: var(--text-dim); font-size: 0.85rem; margin-top: 10px; }
+
+  /* pipeline chips */
+  .pipeline {
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+    justify-content: center; margin-top: 24px;
+  }
+  .chip {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 14px; font-size: 0.85rem; white-space: nowrap;
+  }
+  .arrow { color: var(--text-dim); font-size: 1rem; }
+
+  /* example selector */
+  .example-picker {
+    display: block; width: 100%; max-width: 360px; margin-bottom: 22px;
+    background: var(--panel); border: 1px solid var(--border); color: var(--text);
+    padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+    appearance: none; -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath fill='none' stroke='%239aa3b8' stroke-width='2' d='M1 1l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center;
+    transition: border-color .15s ease;
+  }
+  .example-picker:hover, .example-picker:focus { border-color: var(--accent); outline: none; }
+  .example-picker option { background: var(--panel); color: var(--text); }
+
+  .transcript-box {
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 18px; margin-bottom: 28px; font-size: 0.92rem;
+  }
+  .transcript-box .label {
+    color: var(--accent-2); font-size: 0.72rem; text-transform: uppercase;
+    letter-spacing: 0.06em; font-weight: 700; margin-bottom: 4px;
+  }
+
+  .stage-group { margin-bottom: 28px; }
+  .stage-group .stage-title {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim); font-weight: 700; margin-bottom: 10px;
+  }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px;
+  }
+  .card .name { font-weight: 600; font-size: 0.9rem; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot.raw { background: var(--text-dim); }
+  .dot.speech { background: var(--accent); }
+  .dot.noise { background: var(--warn); }
+  .dot.enhanced { background: var(--accent-2); }
+  .dot.vc { background: #e07bd0; }
+  .dot.l2l1 { background: #ffb454; }
+  .dot.tts { background: #6fd0ff; }
+
+  audio { width: 100%; height: 34px; display: block; }
+  audio::-webkit-media-controls-panel { background: var(--panel-2); }
+
+  .branch-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .branch-header .badge-model {
+    font-size: 0.7rem; padding: 3px 9px; border-radius: 6px; font-weight: 700;
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text-dim);
+  }
+
+  footer {
+    margin-top: 72px; padding-top: 28px; border-top: 1px solid var(--border);
+    text-align: center; color: var(--text-dim); font-size: 0.82rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  pre.bibtex {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; overflow-x: auto; font-size: 0.8rem; color: var(--text-dim);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <h1>Synthetic Audio Generation Framework for<br>Air Traffic Control Speech Recognition</h1>
+    <p class="byline">
+      Raphaël Bagat<sup>1</sup>, Zhe Zhang<sup>2</sup>, Junichi Yamagishi<sup>2</sup>, Irina Illina<sup>1</sup>, Emmanuel Vincent<sup>1</sup>
+    </p>
+    <p class="affil">
+      <sup>1</sup>Université de Lorraine, CNRS, Inria, LORIA, F-54000 Nancy, France &nbsp;·&nbsp;
+      <sup>2</sup>National Institute of Informatics, Tokyo, Japan
+    </p>
+
+    <div class="badges" style="margin-top: 2em;">
+      <a class="badge" href="https://arxiv.org/abs/2606.21340">arXiv 2606.21340</a>
+      <a class="badge" href="https://gitlab.inria.fr/rbagat/atc_generation">Official Repo</a>
+    </div>
+  </header>
+
+  <section id="pipeline">
+    <h2><span class="idx">1</span>Pipeline</h2>
+    <p class="lead">
+      Each real ATC recording is separated into speech and channel noise, the speech is bandwidth-restored,
+      then re-synthesized through three independent branches, and finally re-mixed with the original noise
+      to keep the ATC channel character.
+    </p>
+    <div class="pipeline">
+      <span class="chip">Real ATC audio</span>
+      <span class="arrow">→</span>
+      <span class="chip">Speech / Noise Separation</span>
+      <span class="arrow">→</span>
+      <span class="chip">Super-Resolution</span>
+      <span class="arrow">→</span>
+      <span class="chip">VC · L2→L1 AC · TTS</span>
+      <span class="arrow">→</span>
+      <span class="chip">ATC Re-simulation</span>
+    </div>
+    <figure>
+      <img src="figures/thumbnail.png" alt="Pipeline architecture diagram">
+      <figcaption>Synthetic audio generation framework for ATC.</figcaption>
+    </figure>
+  </section>
+
+  <section id="demo">
+    <h2><span class="idx">2</span>Demo</h2>
+    <p class="lead">Pick an utterance to hear every intermediate stage of the pipeline.</p>
+
+    <select class="example-picker" id="picker"></select>
+    <div class="transcript-box">
+      <div class="label">Transcript</div>
+      <div id="transcript-text"></div>
+    </div>
+
+    <div class="stage-group">
+      <div class="stage-title">Step 0 — Input</div>
+      <div class="grid">
+        <div class="card">
+          <div class="name"><span class="dot raw"></span>Original ATC Recording</div>
+          <audio controls id="a-original"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-group">
+      <div class="stage-title">Step 1 — Speech / Noise Separation <span style="opacity:.6">(AudioSep)</span></div>
+      <div class="grid">
+        <div class="card">
+          <div class="name"><span class="dot speech"></span>Separated Speech</div>
+          <audio controls id="a-sep-speech"></audio>
+        </div>
+        <div class="card">
+          <div class="name"><span class="dot noise"></span>Separated Noise</div>
+          <audio controls id="a-sep-noise"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-group">
+      <div class="stage-title">Step 2 — Super-Resolution <span style="opacity:.6">(AudioSR)</span></div>
+      <div class="grid">
+        <div class="card">
+          <div class="name"><span class="dot enhanced"></span>Super-Resolved Speech</div>
+          <audio controls id="a-superres"></audio>
+        </div>
+      </div>
+    </div>
+
+    <div class="stage-group">
+      <div class="stage-title">Step 3 — Content Re-synthesis (three independent branches)</div>
+      <div class="grid">
+        <div class="card">
+          <div class="branch-header">
+            <span class="dot vc"></span><b>Voice Conversion</b>
+            <span class="badge-model">SALT</span>
+          </div>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">Clean</div>
+          <audio controls id="a-vc-clean" style="margin-bottom:12px;"></audio>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">ATC-simulated</div>
+          <audio controls id="a-vc-atc"></audio>
+        </div>
+        <div class="card">
+          <div class="branch-header">
+            <span class="dot l2l1"></span><b>L2→L1 Accent Conversion</b>
+            <span class="badge-model">TokAN</span>
+          </div>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">Clean</div>
+          <audio controls id="a-l2l1-clean" style="margin-bottom:12px;"></audio>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">ATC-simulated</div>
+          <audio controls id="a-l2l1-atc"></audio>
+        </div>
+        <div class="card">
+          <div class="branch-header">
+            <span class="dot tts"></span><b>TTS Re-synthesis</b>
+            <span class="badge-model">F5-TTS</span>
+          </div>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">Clean</div>
+          <audio controls id="a-tts-clean" style="margin-bottom:12px;"></audio>
+          <div style="margin-bottom:6px;color:var(--text-dim);font-size:.8rem;">ATC-simulated</div>
+          <audio controls id="a-tts-atc"></audio>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="citation">
+    <h2><span class="idx">3</span>Citation</h2>
+    <p class="lead">If you use this pipeline, please cite the original paper it re-implements:</p>
+    <pre class="bibtex">@article{bagat2026synthetic,
+  title     = {Synthetic Audio Generation Framework for Air Traffic Control Speech Recognition},
+  author    = {Bagat, Rapha&#235;l and Zhang, Zhe and Yamagishi, Junichi and Illina, Irina and Vincent, Emmanuel},
+  booktitle = {Interspeech},
+  year      = {2026}
+}</pre>
+  </section>
+
+  <footer>
+    Unofficial re-implementation maintained by <a href="https://github.com/morris88826">@morris88826</a> ·
+    <a href="README.md">Source & setup instructions</a> ·
+    Audio samples generated on the <a href="https://www.atco2.org/data">ATCO2</a> dataset
+  </footer>
+
+</div>
+
+<script>
+// Example list is not hardcoded here — it's read at runtime from samples/manifest.json,
+// which is generated directly from the contents of samples/ (see samples/manifest.json).
+let EXAMPLES = [];
+
+const STAGE_DIRS = {
+  original:   "samples/00_original_speech",
+  sepSpeech:  "samples/01_separated_speech",
+  sepNoise:   "samples/01_separated_noise",
+  superres:   "samples/02_superresolved_speech",
+  vcClean:    "samples/03_clean_speech_vc",
+  vcAtc:      "samples/04_atc_simulated_speech_vc",
+  l2l1Clean:  "samples/03_clean_speech_l2_to_l1",
+  l2l1Atc:    "samples/04_atc_simulated_speech_l2_to_l1",
+  ttsClean:   "samples/03_clean_speech_tts",
+  ttsAtc:     "samples/04_atc_simulated_speech_tts",
+};
+
+const AUDIO_IDS = {
+  original: "a-original",
+  sepSpeech: "a-sep-speech",
+  sepNoise: "a-sep-noise",
+  superres: "a-superres",
+  vcClean: "a-vc-clean",
+  vcAtc: "a-vc-atc",
+  l2l1Clean: "a-l2l1-clean",
+  l2l1Atc: "a-l2l1-atc",
+  ttsClean: "a-tts-clean",
+  ttsAtc: "a-tts-atc",
+};
+
+function loadExample(idx) {
+  const ex = EXAMPLES[idx];
+  if (!ex) return;
+  document.getElementById("transcript-text").textContent = ex.transcript;
+  for (const key in STAGE_DIRS) {
+    const el = document.getElementById(AUDIO_IDS[key]);
+    el.src = `${STAGE_DIRS[key]}/${ex.id}.wav`;
+    el.load();
+  }
+  picker.selectedIndex = idx;
+}
+
+const picker = document.getElementById("picker");
+picker.addEventListener("change", () => loadExample(picker.selectedIndex));
+
+fetch("samples/manifest.json")
+  .then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  })
+  .then((manifest) => {
+    EXAMPLES = manifest;
+    picker.innerHTML = "";
+    EXAMPLES.forEach((ex, i) => {
+      const opt = document.createElement("option");
+      opt.value = i;
+      opt.textContent = `Example ${i + 1}`;
+      picker.appendChild(opt);
+    });
+    loadExample(0);
+  })
+  .catch((err) => {
+    document.getElementById("transcript-text").textContent =
+      "Could not load samples/manifest.json — serve this page over HTTP (not file://) from the repo root.";
+    console.error("Failed to load sample manifest:", err);
+  });
+</script>
+
+</body>
+</html>

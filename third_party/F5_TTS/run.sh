@@ -1,0 +1,10 @@
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset AESRC
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset CommonVoice
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset EdAcc
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset Emilia_curated
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset GLOBE
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset IDEA
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset L2ARCTIC
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset LatinAmericanEAD
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset SpeechAccentArchive
+torchrun --nproc_per_node=4 generate_parallel_samples.py --dataset voxpopuli
