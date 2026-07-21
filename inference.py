@@ -166,7 +166,7 @@ def tts_generation(audio_path, noise_path, transcript, model, out_dir, verbose=T
             output_wav=tts_speech_output_file,
             reference_wav=audio_path,
             reference_text=transcript.lower(),
-            fix_duration=librosa.get_duration(filename=audio_path) + 2.5,
+            fix_duration=librosa.get_duration(filename=audio_path) * 2,
             verbose=False
         )
 
